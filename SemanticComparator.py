@@ -5,6 +5,7 @@ from nltk.corpus import brown
 import math
 import numpy as np
 import sys
+from nltk.corpus import wordnet_ic
 
 ALPHA = 0.2
 BETA = 0.45
@@ -14,6 +15,7 @@ DELTA = 0.85
 
 brown_freqs = dict() #diccionario de frecuencias de palabras
 N = 0
+semcor_ic = wordnet_ic.ic('ic-semcor.dat')
 
 class SemanticComparator(object):
     
@@ -28,9 +30,14 @@ class SemanticComparator(object):
             best_pair = None, None
             for synset_1 in synsets_1:
                 for synset_2 in synsets_2:
-                    sim = wn.path_similarity(synset_1, synset_2)
-                    if sim == None:
+                    #sim = wn.path_similarity(synset_1, synset_2)
+                    #sim = wn.lin_similarity(synset_1, synset_2, semcor_ic)
+                    try:
+                        sim = synset_1.lin_similarity(synset_2, semcor_ic)
+                    except nltk.corpus.reader.wordnet.WordNetError:
                         sim = 0
+                    #if sim == None:
+                        #sim = 0
                     if sim > max_sim:
                         max_sim = sim
                         best_pair = synset_1, synset_2
@@ -129,7 +136,7 @@ class SemanticComparator(object):
             else:
                 # find the most similar word in the joint set and set the sim value
                 sim_word, max_sim = self.most_similar_word(joint_word, sent_set)
-                semvec[i] = PHI if max_sim > PHI else 0.0
+                semvec[i] = max_sim if max_sim > PHI else 0.0
                 if info_content_norm:
                     semvec[i] = semvec[i] * self.info_content(joint_word) * self.info_content(sim_word)
             i = i + 1
@@ -172,11 +179,10 @@ class SemanticComparator(object):
         return 1.0 - (np.linalg.norm(r1 - r2) / np.linalg.norm(r1 + r2))
 
     def similarity(self, sentence_1, sentence_2, info_content_norm):
-        return DELTA * self.semantic_similarity(sentence_1, sentence_2, info_content_norm) + \
-            (1.0 - DELTA) * self.word_order_similarity(sentence_1, sentence_2)
+        return DELTA * self.semantic_similarity(sentence_1, sentence_2, info_content_norm) + (1.0 - DELTA) * self.word_order_similarity(sentence_1, sentence_2)
 
     def must_train(self):
         return False
     
     def compare(self, question1, question2):
-        return (1 - self.similarity(question1, question2, True))
+        return float(1 - self.similarity(question1, question2, True))
