@@ -1,18 +1,15 @@
 from __future__ import division
 import nltk
+from nltk.corpus import brown, wordnet_ic
 from nltk.corpus import wordnet as wn
-from nltk.corpus import brown
-import math
+import math, sys
 import numpy as np
-import sys
-from nltk.corpus import wordnet_ic
 
 ALPHA = 0.2
 BETA = 0.45
 ETA = 0.4
 PHI = 0.2
 DELTA = 0.85
-
 brown_freqs = dict() #diccionario de frecuencias de palabras
 N = 0
 semcor_ic = wordnet_ic.ic('ic-semcor.dat')
@@ -44,7 +41,6 @@ class SemanticComparator(object):
         if synset_1 is None or synset_2 is None: 
             return 0.0
         if synset_1 == synset_2:
-            # if synset_1 and synset_2 are the same synset return 0
             l_dist = 0.0
         else:
             wset_1 = set([str(x.name()) for x in synset_1.lemmas()])        
@@ -71,8 +67,7 @@ class SemanticComparator(object):
             # find the max depth of least common subsumer
             hypernyms_1 = {x[0]:x[1] for x in synset_1.hypernym_distances()}
             hypernyms_2 = {x[0]:x[1] for x in synset_2.hypernym_distances()}
-            lcs_candidates = set(hypernyms_1.keys()).intersection(
-                set(hypernyms_2.keys()))
+            lcs_candidates = set(hypernyms_1.keys()).intersection(set(hypernyms_2.keys()))
             if len(lcs_candidates) > 0:
                 lcs_dists = []
                 for lcs_candidate in lcs_candidates:
@@ -86,13 +81,11 @@ class SemanticComparator(object):
                 h_dist = max(lcs_dists)
             else:
                 h_dist = 0
-        return ((math.exp(BETA * h_dist) - math.exp(-BETA * h_dist)) / 
-            (math.exp(BETA * h_dist) + math.exp(-BETA * h_dist)))
+        return ((math.exp(BETA * h_dist) - math.exp(-BETA * h_dist)) / (math.exp(BETA * h_dist) + math.exp(-BETA * h_dist)))
 
     def word_similarity(self, word_1, word_2):
         synset_pair = self.get_best_synset_pair(word_1, word_2)
-        return (self.length_dist(synset_pair[0], synset_pair[1]) * 
-            self.hierarchy_dist(synset_pair[0], synset_pair[1]))
+        return (self.length_dist(synset_pair[0], synset_pair[1]) * self.hierarchy_dist(synset_pair[0], synset_pair[1]))
 
     def most_similar_word(self, word, word_set):
         max_sim = -1.0
