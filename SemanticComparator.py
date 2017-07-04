@@ -30,14 +30,10 @@ class SemanticComparator(object):
             best_pair = None, None
             for synset_1 in synsets_1:
                 for synset_2 in synsets_2:
-                    #sim = wn.path_similarity(synset_1, synset_2)
-                    #sim = wn.lin_similarity(synset_1, synset_2, semcor_ic)
                     try:
                         sim = synset_1.lin_similarity(synset_2, semcor_ic)
                     except nltk.corpus.reader.wordnet.WordNetError:
                         sim = 0
-                    #if sim == None:
-                        #sim = 0
                     if sim > max_sim:
                         max_sim = sim
                         best_pair = synset_1, synset_2
